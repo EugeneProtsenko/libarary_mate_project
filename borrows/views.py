@@ -1,7 +1,9 @@
 from django.shortcuts import render
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 
 from borrows.models import Borrow
+from borrows.permissions import IsAdminOrIsSelf
 from borrows.serializers import (
     BorrowSerializer,
     BorrowListSerializer,
@@ -13,6 +15,36 @@ from borrows.serializers import (
 class BorrowViewSet(viewsets.ModelViewSet):
     queryset = Borrow.objects.all().select_related("user", "book")
     serializer_class = BorrowSerializer
+    permission_classes = (IsAuthenticated,)
+
+    @staticmethod
+    def _params_to_ints(qs):
+        return [int(str_id) for str_id in qs.split(",")]
+
+    @staticmethod
+    def _params_to_bool(qs: str) -> bool:
+        return qs.lower() == "true"
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        user = self.request.query_params.get("user_id")
+        if user:
+            user_ids = self._params_to_ints(user)
+            queryset = queryset.filter(user_id__in=user_ids)
+
+        is_active = self.request.query_params.get("is_active")
+        if is_active is not None:
+            is_active_bool = self._params_to_bool(is_active)
+            if is_active_bool:
+                queryset = queryset.filter(actual_return__isnull=True)
+            else:
+                queryset = queryset.filter(actual_return__isnull=False)
+
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(user=self.request.user)
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":

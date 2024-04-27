@@ -5,6 +5,8 @@ from borrows.models import Borrow
 
 
 class BorrowSerializer(serializers.ModelSerializer):
+    is_active = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Borrow
         fields = (
@@ -14,7 +16,11 @@ class BorrowSerializer(serializers.ModelSerializer):
             "actual_return",
             "book",
             "user",
+            "is_active",
         )
+
+    def get_is_active(self, obj):
+        return obj.actual_return is None
 
 
 class BorrowListSerializer(BorrowSerializer):
@@ -36,6 +42,7 @@ class BorrowDetailSerializer(BorrowSerializer):
     book_cover = serializers.CharField(source="book.cover", read_only=True)
     book_inventory = serializers.CharField(source="book.inventory", read_only=True)
     daily_fee = serializers.CharField(source="book.daily_fee", read_only=True)
+    is_active = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Borrow
@@ -46,7 +53,11 @@ class BorrowDetailSerializer(BorrowSerializer):
             "book_cover",
             "book_inventory",
             "daily_fee",
+            "is_active",
         )
+
+    def get_is_active(self, obj):
+        return obj.actual_return is None
 
 
 class BorrowCreateSerializer(BorrowDetailSerializer):
