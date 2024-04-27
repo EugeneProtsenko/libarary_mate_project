@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from borrows.models import Borrow
@@ -46,3 +47,23 @@ class BorrowDetailSerializer(BorrowSerializer):
             "book_inventory",
             "daily_fee",
         )
+
+
+class BorrowCreateSerializer(BorrowDetailSerializer):
+    class Meta:
+        model = Borrow
+        fields = (
+            "id",
+            "book",
+            "borrow_date",
+            "expected_return",
+            "actual_return",
+            "book_title",
+            "book_author",
+            "daily_fee",
+        )
+
+    def validate_book(self, book):
+        if book.inventory == 0:
+            raise serializers.ValidationError("This book is currently out of stock.")
+        return book
