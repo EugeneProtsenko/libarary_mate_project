@@ -1,14 +1,20 @@
+from datetime import datetime
+
 from django.shortcuts import render
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from borrows.models import Borrow
-from borrows.permissions import IsAdminOrIsSelf
+
+# from borrows.permissions import IsAdminOrIsSelf
 from borrows.serializers import (
     BorrowSerializer,
     BorrowListSerializer,
     BorrowDetailSerializer,
     BorrowCreateSerializer,
+    BorrowReturnSerializer,
 )
 
 
@@ -63,3 +69,24 @@ class BorrowViewSet(viewsets.ModelViewSet):
         book.inventory -= 1
         book.save()
         serializer.save(user=self.request.user)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="return",
+        serializer_class=BorrowReturnSerializer,
+    )
+    def borrowing_return(self, request, pk=None):
+        borrowing = self.get_object()
+        book = borrowing.book
+        actual_return = datetime.now().date()
+
+        serializer_update = BorrowReturnSerializer(
+            borrowing,
+            context={"request": self.request},
+            data={"actual_return": actual_return},
+            partial=True,
+        )
+        serializer_update.is_valid(raise_exception=True)
+        serializer_update.save()
+        return Response({"status": "borrowing returned"})
