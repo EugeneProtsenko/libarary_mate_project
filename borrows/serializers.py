@@ -3,6 +3,7 @@ from datetime import datetime
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from telegram_helper import send_telegram_notification
 
 from borrows.models import Borrow
 
@@ -112,4 +113,8 @@ class BorrowReturnSerializer(serializers.ModelSerializer):
         instance.save()
         book.inventory += 1
         book.save()
+
+        message = f"Borrowing returned: Book {book.title}, User {instance.user.email}"
+        send_telegram_notification(message)
+
         return instance
