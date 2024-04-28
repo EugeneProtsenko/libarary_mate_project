@@ -140,3 +140,19 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": False,
 }
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    "check-overdue-borrowings-every-morning": {
+        "task": "borrows.tasks.check_overdue_borrowings",
+        "schedule": crontab(hour=9, minute=30),  # Executes every day at 9:30 a.m.
+    },
+}
+
+CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_RESULT_BACKEND = "redis://redis:6379"
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Europe/Berlin"
