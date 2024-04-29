@@ -77,6 +77,7 @@ class BorrowCreateSerializer(BorrowDetailSerializer):
             "book_author",
             "daily_fee",
         )
+        read_only_fields = ("actual_return",)
 
     def validate_book(self, book):
         if book.inventory == 0:

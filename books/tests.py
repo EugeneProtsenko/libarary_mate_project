@@ -29,8 +29,8 @@ class UnauthenticatedBookTests(TestCase):
     def test_books_list(self):
         sample_book()
         response = self.client.get(BOOKS_URL)
-        buses = Book.objects.all()
-        serializer = BookListSerializer(buses, many=True)
+        books = Book.objects.all()
+        serializer = BookListSerializer(books, many=True)
 
         self.assertEqual(response.data, serializer.data)
 
