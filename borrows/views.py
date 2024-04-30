@@ -5,6 +5,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from payments.helper import create_stripe_session
 from telegram_helper import send_telegram_notification
 
 from borrows.models import Borrow
@@ -72,6 +74,7 @@ class BorrowViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
         message = f"Borrowing create: Book {book.title}, User {serializer.instance.user.email}"
         send_telegram_notification(message)
+        create_stripe_session(serializer.instance)
 
     @action(
         detail=True,

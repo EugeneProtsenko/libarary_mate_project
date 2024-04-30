@@ -3,6 +3,8 @@ from datetime import datetime
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+
+from payments.serializers import PaymentSerializer
 from telegram_helper import send_telegram_notification
 
 from borrows.models import Borrow
@@ -10,6 +12,7 @@ from borrows.models import Borrow
 
 class BorrowSerializer(serializers.ModelSerializer):
     is_active = serializers.SerializerMethodField(read_only=True)
+    payment_set = PaymentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Borrow
@@ -21,6 +24,7 @@ class BorrowSerializer(serializers.ModelSerializer):
             "book",
             "user",
             "is_active",
+            "payment_set",
         )
 
     def get_is_active(self, obj):
@@ -30,6 +34,7 @@ class BorrowSerializer(serializers.ModelSerializer):
 class BorrowListSerializer(BorrowSerializer):
     book_title = serializers.CharField(source="book.title", read_only=True)
     book_author = serializers.CharField(source="book.author", read_only=True)
+    payment_set = PaymentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Borrow
@@ -37,6 +42,7 @@ class BorrowListSerializer(BorrowSerializer):
             "id",
             "book_title",
             "book_author",
+            "payment_set",
         )
 
 
@@ -47,6 +53,7 @@ class BorrowDetailSerializer(BorrowSerializer):
     book_inventory = serializers.CharField(source="book.inventory", read_only=True)
     daily_fee = serializers.CharField(source="book.daily_fee", read_only=True)
     is_active = serializers.SerializerMethodField(read_only=True)
+    payment_set = PaymentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Borrow
@@ -58,6 +65,7 @@ class BorrowDetailSerializer(BorrowSerializer):
             "book_inventory",
             "daily_fee",
             "is_active",
+            "payment_set",
         )
 
     def get_is_active(self, obj):
@@ -65,6 +73,8 @@ class BorrowDetailSerializer(BorrowSerializer):
 
 
 class BorrowCreateSerializer(BorrowDetailSerializer):
+    payment_set = PaymentSerializer(many=True, read_only=True)
+
     class Meta:
         model = Borrow
         fields = (
@@ -76,6 +86,7 @@ class BorrowCreateSerializer(BorrowDetailSerializer):
             "book_title",
             "book_author",
             "daily_fee",
+            "payment_set",
         )
         read_only_fields = ("actual_return",)
 
