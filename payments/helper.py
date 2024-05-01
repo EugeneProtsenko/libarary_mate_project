@@ -6,6 +6,9 @@ from payments.models import Payment
 from datetime import datetime
 
 
+FINE_MULTIPLIER = 2
+
+
 def calculate_total_price(borrowing):
     return_date = (
         borrowing.actual_return if borrowing.actual_return else datetime.now().date()
@@ -14,7 +17,8 @@ def calculate_total_price(borrowing):
     total_price = num_days * borrowing.book.daily_fee
 
     if borrowing.expected_return < return_date:
-        total_price += borrowing.book.late_fee
+        overdue_days = (return_date - borrowing.expected_return).days
+        total_price += overdue_days * borrowing.book.daily_fee * FINE_MULTIPLIER
 
     return total_price
 
@@ -42,8 +46,8 @@ def create_stripe_session(borrowing):
             }
         ],
         mode="payment",
-        success_url="http://localhost:8000/api/payments/payment-success/",  # {CHECKOUT_SESSION_ID}
-        cancel_url="http://localhost:8000/api/payments/payment_cancelled",
+        success_url="http://localhost:8000/api/payments/payment-success/{CHECKOUT_SESSION_ID}/",
+        cancel_url="http://localhost:8000/api/payments/payment-cancelled/",
     )
 
     payment = Payment.objects.create(

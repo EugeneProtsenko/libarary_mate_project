@@ -1,11 +1,13 @@
 import stripe
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
-from rest_framework import viewsets, mixins, settings
+from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
+from library_project_final import settings
 
 from books.models import Book
 from payments.models import Payment
@@ -36,47 +38,22 @@ class PaymentViewSet(
             return PaymentListSerializer
 
 
-# class CreateStripeSessionView(APIView):
-#     def post(self, request, *args, **kwargs):
-#         stripe.api_key = settings.STRIPE_SECRET_KEY
-#         book_id = request.data.get("book_id")
-#
-#         # Fetch the book from the database
-#         try:
-#             book = Book.objects.get(id=book_id)
-#         except Book.DoesNotExist:
-#             return Response({"error": "Book not found"}, status=404)
-#
-#         session = stripe.checkout.Session.create(
-#             payment_method_types=["card"],
-#             line_items=[
-#                 {
-#                     "price_data": {
-#                         "currency": "usd",
-#                         "product_data": {
-#                             "name": book.title,
-#                         },
-#                         "daily_fee": book.daily_fee,
-#                     },
-#                     "quantity": 1,
-#                 }
-#             ],
-#             mode="payment",
-#             success_url=request.build_absolute_uri(reverse("payment_success")),
-#             cancel_url=request.build_absolute_uri(reverse("payment_cancelled")),
-#         )
-#
-#         return Response(
-#             {
-#                 "session_id": session.id,
-#                 "session_url": f"https://checkout.stripe.com/pay/{session.id}",
-#             }
-#         )
+@transaction.atomic
+def payment_success(request, session_id):
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    session = stripe.checkout.Session.retrieve(session_id)
 
+    if session.payment_status == "paid":
+        payment = Payment.objects.get(session_id=session_id)
+        payment.status = Payment.StatusChoices.PAID
+        payment.save()
 
-def payment_success(request):
-    return HttpResponse("Payment was successful!")
+        return HttpResponse("Payment was successful!")
+    else:
+        return HttpResponse("Payment was not successful.")
 
 
 def payment_cancelled(request):
-    return HttpResponse("Payment was cancelled.")
+    return HttpResponse(
+        "Payment was cancelled. You can pay later, but the session is available for only 24 hours."
+    )

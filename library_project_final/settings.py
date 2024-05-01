@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "user",
     "borrows",
     "payments",
+    "django_extensions",
 ]
 
 AUTH_USER_MODEL = "user.User"
