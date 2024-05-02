@@ -10,7 +10,7 @@ from books.models import Book
 from borrows.models import Borrow
 from payments.models import Payment
 from payments.serializers import PaymentListSerializer, PaymentDetailSerializer
-from payments.views import payment_success
+from payments.views import payment_success, payment_cancelled
 
 PAYMENTS_URLS = reverse("payments:payment-list")
 
@@ -157,3 +157,13 @@ class PaymentSuccessTest(TestCase):
         # Check that the response is correct
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content.decode(), "Payment was not successful.")
+
+    def test_payment_cancel(self):
+        request = self.factory.get("/payment_cancelled_url")
+        response = payment_cancelled(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.content.decode(),
+            "Payment was cancelled. You can pay later, but the session is available for only 24 hours.",
+        )
