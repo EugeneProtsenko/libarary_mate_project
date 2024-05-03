@@ -32,7 +32,7 @@ class UnauthenticatedBookTests(TestCase):
         books = Book.objects.all()
         serializer = BookListSerializer(books, many=True)
 
-        self.assertEqual(response.data, serializer.data)
+        self.assertEqual(response.data["results"], serializer.data)
 
     def test_unauth_book(self):
         res = self.client.get(BOOKS_URL)
@@ -57,7 +57,7 @@ class AuthenticatedBookTests(TestCase):
         books = Book.objects.all()
         serializer = BookListSerializer(books, many=True)
 
-        self.assertEqual(response.data, serializer.data)
+        self.assertEqual(response.data["results"], serializer.data)
 
     def test_create_book_by_user(self):
         res = self.client.post(BOOKS_URL)

@@ -71,7 +71,7 @@ class AuthenticatedPaymentsTests(TestCase):
         payments = Payment.objects.all()
         serializer = PaymentListSerializer(payments, many=True)
 
-        self.assertEqual(response.data, serializer.data)
+        self.assertEqual(response.data["results"], serializer.data)
 
     def test_payments_detail(self):
         payment = sample_payments(self.user, self.book)

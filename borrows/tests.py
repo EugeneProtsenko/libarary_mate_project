@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
@@ -10,6 +11,7 @@ from rest_framework.test import APIClient
 from books.models import Book
 from borrows.models import Borrow
 from borrows.serializers import BorrowListSerializer, BorrowDetailSerializer
+from borrows.tasks import check_overdue_borrowings
 
 BORROWS_URL = reverse("borrows:borrow-list")
 
@@ -60,7 +62,7 @@ class AuthenticatedBorrowsTests(TestCase):
         borrows = Borrow.objects.all()
         serializer = BorrowListSerializer(borrows, many=True)
 
-        self.assertEqual(response.data, serializer.data)
+        self.assertEqual(response.data["results"], serializer.data)
 
     def test_borrows_detail(self):
         borrow = sample_borrow(self.user)
@@ -133,4 +135,33 @@ class AuthenticatedBorrowsTests(TestCase):
         expected_message = (
             f"Borrowing returned: Book {book.title}, User {self.user.email}"
         )
+        mock_send_telegram_notification.assert_called_once_with(expected_message)
+
+
+class CheckOverdueBorrowingsTest(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email="example@mail.com", password="password"
+        )
+        self.book = Book.objects.create(
+            title="Sample",
+            author="Name",
+            cover="Hard",
+            inventory=23,
+            daily_fee=2.45,
+        )
+        self.borrow = Borrow.objects.create(
+            borrow_date=timezone.now().date(),
+            expected_return=timezone.now().date()
+            - timezone.timedelta(days=1),  # overdue
+            actual_return=None,
+            book=self.book,
+            user=self.user,
+        )
+
+    @patch("borrows.tasks.send_telegram_notification")
+    def test_check_overdue_borrowings(self, mock_send_telegram_notification):
+        check_overdue_borrowings()
+        self.assertTrue(mock_send_telegram_notification.called)
+        expected_message = f"Borrowing overdue: Book {self.borrow.book.title}, User {self.borrow.user.email}"
         mock_send_telegram_notification.assert_called_once_with(expected_message)
