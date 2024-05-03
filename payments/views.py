@@ -21,10 +21,21 @@ from payments.serializers import (
 class PaymentViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
 ):
+    """
+    retrieve:
+    Return the given payment.
+
+    list:
+    Return a list of all the existing payments.
+    """
+
     queryset = Payment.objects.all().select_related("borrowing")
     serializer_class = PaymentSerializer
 
     def get_permissions(self):
+        """
+        Returns the list of permissions that this view requires.
+        """
         if self.action in ["retrieve", "list"]:
             permission_classes = [IsAuthenticated]
         else:
@@ -40,6 +51,9 @@ class PaymentViewSet(
 
 @transaction.atomic
 def payment_success(request, session_id):
+    """
+    Handles successful payments. Retrieves the payment session from Stripe and updates the payment status in the database.
+    """
     stripe.api_key = settings.STRIPE_SECRET_KEY
     session = stripe.checkout.Session.retrieve(session_id)
 
@@ -54,6 +68,9 @@ def payment_success(request, session_id):
 
 
 def payment_cancelled(request):
+    """
+    Handles cancelled payments. Returns a message to the user.
+    """
     return HttpResponse(
         "Payment was cancelled. You can pay later, but the session is available for only 24 hours."
     )
