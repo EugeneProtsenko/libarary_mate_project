@@ -3,7 +3,7 @@ from django.utils import timezone
 from .models import Borrow
 from telegram_helper import (
     send_telegram_notification,
-)  # assuming you have a function for this
+)
 
 
 @shared_task

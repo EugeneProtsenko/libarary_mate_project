@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-p_==4^zhq%q_%9-)ojiuih&#jd9@(jkn4_g)z7=k(uat#8!bf!"
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -165,7 +170,7 @@ from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     "check-overdue-borrowings-every-morning": {
-        "task": "borrows.tasks.check_overdue_borrowings",  # tests
+        "task": "borrows.tasks.check_overdue_borrowings",
         "schedule": crontab(hour=9, minute=30),  # Executes every day at 9:30 a.m.
     },
 }
@@ -177,5 +182,5 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Europe/Berlin"
 
-STRIPE_PUBLIC_KEY = "pk_test_51PBDSMP8tfklakFJVRLGYcwMNxZpvm1mJbldpmO3o0chfy8OZoAR7dNxhzYUbZB8WV8qeCnwPUyEQxhhKnjtskHV00OP9Ic4z2"
-STRIPE_SECRET_KEY = "sk_test_51PBDSMP8tfklakFJWdcDzHrSDjY7S9zqus7vVne2boS4nXlAcljrSb4sNak3hUGOD0tBp8q6qlktp3cyNqBjUcYL00LhX7EeA1"
+STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY")
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
